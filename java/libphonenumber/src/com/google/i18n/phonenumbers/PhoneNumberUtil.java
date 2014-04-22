@@ -1030,7 +1030,7 @@ public class PhoneNumberUtil {
    * verify if the number is actually in use.
    */
   boolean isNumberGeographical(PhoneNumber phoneNumber) {
-    PhoneNumberType numberType = getNumberType(phoneNumber);
+    PhoneNumberType numberType = getNumberType(phoneNumber, false);
     // TODO: Include mobile phone numbers from countries like Indonesia, which has some
     // mobile numbers that are geographical.
     return numberType == PhoneNumberType.FIXED_LINE ||
@@ -1940,7 +1940,11 @@ public class PhoneNumberUtil {
    * @return  the type of the phone number
    */
   public PhoneNumberType getNumberType(PhoneNumber number) {
-    String regionCode = getRegionCodeForNumber(number);
+    return getNumberType(number, true);
+  }
+
+  private PhoneNumberType getNumberType(PhoneNumber number, boolean warn) {
+    String regionCode = getRegionCodeForNumber(number, warn);
     PhoneMetadata metadata = getMetadataForRegionOrCallingCode(number.getCountryCode(), regionCode);
     if (metadata == null) {
       return PhoneNumberType.UNKNOWN;
@@ -2052,7 +2056,7 @@ public class PhoneNumberUtil {
    * @return  a boolean that indicates whether the number is of a valid pattern
    */
   public boolean isValidNumber(PhoneNumber number) {
-    String regionCode = getRegionCodeForNumber(number);
+    String regionCode = getRegionCodeForNumber(number, false);
     return isValidNumberForRegion(number, regionCode);
   }
 
@@ -2104,12 +2108,18 @@ public class PhoneNumberUtil {
    *     code
    */
   public String getRegionCodeForNumber(PhoneNumber number) {
+    return getRegionCodeForNumber(number, true);
+  }
+  
+  private String getRegionCodeForNumber(PhoneNumber number, boolean warn) {
     int countryCode = number.getCountryCode();
     List<String> regions = countryCallingCodeToRegionCodeMap.get(countryCode);
     if (regions == null) {
+      if (warn) {
       String numberString = getNationalSignificantNumber(number);
       logger.log(Level.WARNING,
                  "Missing/invalid country_code (" + countryCode + ") for number " + numberString);
+      }
       return null;
     }
     if (regions.size() == 1) {
